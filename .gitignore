@@ -1,0 +1,25 @@
+# Python
+__pycache__/
+*.pyc
+*.pyd
+*.pyo
+*.egg-info/
+.pytest_cache/
+
+# IDEs
+.vscode/
+
+# Ruff cache
+.ruff_cache/
+
+# mkdocs build
+site/
+
+# venv
+.venv
+
+# System
+last_video_dir.json
+
+#uv (contains author info)
+uv.lock

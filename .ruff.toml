@@ -1,0 +1,17 @@
+# .ruff.toml
+
+# Set the target Python version
+target-version = "py38"
+
+# Enable the default set of rules
+select = ["E", "F", "W", "I"]
+
+# Ignore some rules if necessary (optional)
+# ignore = []
+
+# Configure the formatter
+[format]
+quote-style = "double"
+indent-style = "space"
+skip-magic-trailing-comma = false
+line-ending = "auto"
