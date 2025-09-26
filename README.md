@@ -6,7 +6,7 @@
 
 <div align="center">
   <img
-    src="https://github.com/user-attachments/assets/def66ef4-c659-4ded-96bd-7b1129c610e4"
+    src="https://github.com/user-attachments/assets/6dd8b893-0e0b-405e-a067-e8bfafdf30c5"
     width="1200"
     alt="viva_logo"
   />
@@ -16,8 +16,8 @@
 
 <div align="center">
   <img 
-    src="https://github.com/user-attachments/assets/118e0c52-7b81-4aaf-a3f2-c59db21d1cc2"
-    alt="ViVa-SAFELAND tool" 
+    src="https://github.com/user-attachments/assets/958905f5-4615-4de5-9e56-77c02886dde2"
+    alt="ViVa-SAFELAND tool"
     width="1200"
   />
   <figcaption>ViVa-SAFELAND: A Visual Validation Safe Landing Tool</figcaption>
@@ -27,7 +27,7 @@ This documentation contains the official implementation for the paper *"ViVa-SAF
 
 <div align="center">
   <img 
-    src="https://github.com/user-attachments/assets/1df68484-f424-4918-8fe1-8f38d0ded6a4"
+    src="https://github.com/user-attachments/assets/24d245d4-1568-4f1b-be81-f74ed0d9c574"
     alt="ViVa-SAFELAND Operation" 
     width="1200"
   />
