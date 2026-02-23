@@ -1,8 +1,11 @@
-import argparse
+import argparse, subprocess
 from zros import zNode
 
 from viva.env import DroneEnv
 from viva.modules.hmi import HMI
+
+def start_zroscore():
+    return subprocess.Popen(["uv", "run", "zroscore"])
 
 class VivaBridgeNode(zNode):
     def __init__(self, env: DroneEnv, hmi: HMI):
@@ -42,6 +45,8 @@ def main():
     parser.add_argument("video_path", type=str, help="Path to the background video file")
     args = parser.parse_args()
     video_path = args.video_path
+
+    start_zroscore()
 
     try:
         env = DroneEnv(
