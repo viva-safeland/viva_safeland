@@ -1,20 +1,22 @@
-
-import zmq
-import typer
+import argparse
 import select
 import sys
+import zmq
 
 from viva.env import DroneEnv
 from viva.modules.hmi import HMI
 
-app = typer.Typer()
-
-@app.command()
-def main(
-    video_path: str = typer.Argument(..., help="Path to the background video file"),
-    port_sub: int = typer.Option(5555, help="Port to listen for commands (SUB)"),
-    port_pub: int = typer.Option(5557, help="Port to publish HMI commands (PUB)"),
-):
+def main():
+    parser = argparse.ArgumentParser(description="Viva ZMQ Server")
+    parser.add_argument("video_path", type=str, help="Path to the background video file")
+    parser.add_argument("--port-sub", type=int, default=5555, help="Port to listen for commands (SUB)")
+    parser.add_argument("--port-pub", type=int, default=5557, help="Port to publish HMI commands (PUB)")
+    
+    args = parser.parse_args()
+    
+    video_path = args.video_path
+    port_sub = args.port_sub
+    port_pub = args.port_pub
     print(f"Starting Viva ZMQ Server...")
     print(f"Command Port (REP) [Receive Pose]: {port_sub}")
     print(f"Stream Port (PUB) [Send Actions]: {port_pub}")
@@ -93,4 +95,4 @@ def main(
     print("Viva Server stopped.")
 
 if __name__ == "__main__":
-    app()
+    main()
