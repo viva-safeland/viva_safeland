@@ -193,10 +193,9 @@ class DroneEnv:
         self.current_step = 0
         self._update_frame(reset=True)
 
-        try:
-            frame = self.frame.copy()
-        except AttributeError:
+        if self.frame is None:
             raise RuntimeError("Failed to read the background video or image, verify the file path")
+        frame = self.frame
         
         z_ini = z if z is not None else np.random.uniform(20, min(60, self.height - 1))
         psi_deg_init = psi_deg_init if psi_deg_init is not None else np.random.uniform(0, 360)
@@ -262,7 +261,7 @@ class DroneEnv:
                 - 'actions' (the actions taken, including the current yaw angle).
         """
         self._update_frame()
-        frame = self.frame.copy()
+        frame = self.frame
         if isinstance(actions, list):
             actions = np.array(actions)
 
@@ -359,7 +358,7 @@ class DroneEnv:
             info (Dict[str, Any]): Auxiliary information.
         """
         self._update_frame()
-        frame = self.frame.copy()
+        frame = self.frame
 
         observation, points, drone_state, nadir_point = self.simulator.update_view(
             x, y, z, roll, pitch, yaw, frame
