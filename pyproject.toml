@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "viva-safeland"
-version = "0.2.1"
+version = "0.2.2"
 description = "A new freeware for safe validation of vision-based navigation in aerial vehicles"
 readme = "README.md"
 requires-python = ">=3.12"
