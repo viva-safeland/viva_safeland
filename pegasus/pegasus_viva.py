@@ -53,13 +53,16 @@ class PegasusVivaApp:
         self.pub_pose = self.znode.create_publisher("/drone/pose")
         self.znode.create_subscriber("/drone/control", self.viva_callback)
         self.action, self.command = None, None
+        self.viva_timestamp = time.time()
 
         self.zros_thread = threading.Thread(target=self.znode.spin, daemon=True)
         self.zros_thread.start()
         
 
     def viva_callback(self, msg: dict):
-        self.action, self.command = msg["action"], msg["command"]
+        self.action = msg.get("action")
+        self.command = msg.get("command")
+        self.viva_timestamp = msg.get("timestamp", time.time())
 
     def run_control_logic(self):
         """
@@ -91,25 +94,32 @@ class PegasusVivaApp:
                     self.command = None
                             
                 if self.action is not None and takeoff_done:
-                    roll, pitch, yaw, thrust = self.action             
+                    command_age = time.time() - self.viva_timestamp
+                    if command_age > 0.5:
+                        # Hover if command is too old (>0.5s) to avoid executing outdated inputs
+                        x, y, r = 0, 0, 0
+                        z = 500
+                        ctrl.send_manual_control(x, y, z, r)
+                    else:
+                        roll, pitch, yaw, thrust = self.action             
 
-                    # PX4 MANUAL_CONTROL: x, y, z, r in [-1000, 1000]
-                    # x: pitch (forward > 0)
-                    # y: roll (right > 0)
-                    # z: thrust (0 to 1000 for throttle in manual modes)
-                    # r: yaw (clockwise > 0)
-                    
-                    x = int(pitch * 1000)
-                    y = int(roll * 1000)
-                    r = int(-yaw * 1000) # Viva +yaw is Left, PX4 +r is Right(CW)
-                    
-                    # Throttle mapping: 
-                    # If using POSCTL, z is centered at 500 (hold altitude).
-                    # Viva fk is [-1, 1].
-                    z = int((thrust + 1.0) * 500.0)
-                    z = max(0, min(1000, z))
+                        # PX4 MANUAL_CONTROL: x, y, z, r in [-1000, 1000]
+                        # x: pitch (forward > 0)
+                        # y: roll (right > 0)
+                        # z: thrust (0 to 1000 for throttle in manual modes)
+                        # r: yaw (clockwise > 0)
+                        
+                        x = int(pitch * 1000)
+                        y = int(roll * 1000)
+                        r = int(-yaw * 1000) # Viva +yaw is Left, PX4 +r is Right(CW)
+                        
+                        # Throttle mapping: 
+                        # If using POSCTL, z is centered at 500 (hold altitude).
+                        # Viva fk is [-1, 1].
+                        z = int((thrust + 1.0) * 500.0)
+                        z = max(0, min(1000, z))
 
-                    ctrl.send_manual_control(x, y, z, r)
+                        ctrl.send_manual_control(x, y, z, r)
 
                 time.sleep(0.02) # ~50Hz
 
@@ -135,7 +145,10 @@ class PegasusVivaApp:
             r = Rotation.from_quat(quat_scipy)
             roll, pitch, yaw = r.as_euler("xyz", degrees=True)
             
-            msg = {"pose": pos.tolist() + [roll, pitch, yaw]}
+            msg = {
+                "pose": pos.tolist() + [roll, pitch, yaw],
+                "timestamp": time.time()
+            }
             self.pub_pose.publish(msg)
         
         # Cleanup

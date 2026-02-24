@@ -1,4 +1,5 @@
 import argparse, subprocess
+import time
 from zros import zNode
 
 from viva.env import DroneEnv
@@ -35,6 +36,7 @@ class VivaBridgeNode(zNode):
             self.obs, self.info = self.env.reset()
 
         msg = {
+            "timestamp": time.time(),
             "action": actions.tolist(),
             "command": command
         }
