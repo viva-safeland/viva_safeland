@@ -51,7 +51,7 @@ class PegasusVivaApp:
         # ZROS Setup
         self.znode = zNode("pegasus_node")
         self.pub_pose = self.znode.create_publisher("/drone/pose")
-        self.znode.create_subscriber("/drone/control", self.viva_callback)
+        self.znode.create_subscriber("/drone/control", self.viva_callback, queue_size=10)
         self.action, self.command = None, None
         self.viva_timestamp = time.time()
 

@@ -24,8 +24,11 @@ dependencies = [
     "opencv-python>=4.12.0.88",
     "pillow>=10.4.0",
     "pygame>=2.6.1",
-    "zros>=0.1.10",
 ]
+
+# [tool.uv.sources]
+# zros = { path = "zros", editable = true }
+
 
 [project.scripts]
 viva = "viva.launcher:main"
@@ -35,6 +38,9 @@ docs = [
     "mkdocs>=1.6.1",
     "mkdocs-material>=9.6.17",
     "mkdocstrings[python]>=0.26.1",
+]
+sitl = [
+    "zros>=0.1.16",
 ]
 
 [tool.setuptools.packages.find]
