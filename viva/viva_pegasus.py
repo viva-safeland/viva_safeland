@@ -1,5 +1,5 @@
 import argparse, subprocess
-import time
+import time, numpy as np
 from zros import zNode
 
 from viva.env import DroneEnv
@@ -22,8 +22,12 @@ class VivaBridgeNode(zNode):
 
     def pose_callback(self, msg: dict):
         pose = msg.get("pose")
+        controls = msg.get("controls")  # [roll, pitch, yaw, thrust] from PX4 ACTUATOR_CONTROL_TARGET
+        fk = controls[3] if controls is not None else 0.0
         if pose is not None:
-            self.obs, terminated, self.info = self.env.set_state(*pose)
+            self.obs, terminated, self.info = self.env.set_state(*pose, fk=fk)
+        if controls is not None:
+            self.info["controls"] = controls
             
     def timer_callback(self):
         if not self.hmi.active:
@@ -31,7 +35,7 @@ class VivaBridgeNode(zNode):
             return
             
         actions, command, terminated_command = self.hmi()
-        
+
         if command == "reset":
             self.obs, self.info = self.env.reset()
 

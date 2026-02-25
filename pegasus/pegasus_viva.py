@@ -3,7 +3,7 @@
 import carb
 from isaacsim import SimulationApp
 
-simulation_app = SimulationApp({"headless": True})
+simulation_app = SimulationApp({"headless": False})
 import omni.timeline
 from omni.isaac.core.world import World
 # from omni.isaac.core.utils.rotations import quat_to_euler_angles, euler_angles_to_quat
@@ -57,7 +57,6 @@ class PegasusVivaApp:
 
         self.zros_thread = threading.Thread(target=self.znode.spin, daemon=True)
         self.zros_thread.start()
-        
 
     def viva_callback(self, msg: dict):
         self.action = msg.get("action")
@@ -145,8 +144,11 @@ class PegasusVivaApp:
             r = Rotation.from_quat(quat_scipy)
             roll, pitch, yaw = r.as_euler("xyz", degrees=True)
             
+            controls = list(self.action) if self.action is not None else [0.0, 0.0, 0.0, 0.0]
+
             msg = {
                 "pose": pos.tolist() + [roll, pitch, yaw],
+                "controls": controls,
                 "timestamp": time.time()
             }
             self.pub_pose.publish(msg)

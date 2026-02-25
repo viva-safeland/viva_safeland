@@ -1,4 +1,5 @@
 import re
+import time
 from typing import Any, Dict, Optional, Tuple
 
 import cv2
@@ -109,6 +110,10 @@ class DroneEnv:
         self.hover_z = hover_z
         self.hover_xy = hover_xy
 
+        # For yaw rate estimation in set_state (discrete differentiation)
+        self._prev_yaw: Optional[float] = None
+        self._prev_set_state_time: Optional[float] = None
+
     def _get_height(self, srt_path: str) -> Optional[float]:
         """Extracts the relative altitude from an SRT file.
 
@@ -191,6 +196,8 @@ class DroneEnv:
                 and 'actions' (the actions taken).
         """
         self.current_step = 0
+        self._prev_yaw = None
+        self._prev_set_state_time = None
         self._update_frame(reset=True)
 
         if self.frame is None:
@@ -340,7 +347,8 @@ class DroneEnv:
         return observation, terminated, info
 
     def set_state(
-        self, x: float, y: float, z: float, roll: float, pitch: float, yaw: float
+        self, x: float, y: float, z: float, roll: float, pitch: float, yaw: float,
+        fk: float = 0.0
     ) -> Tuple[np.ndarray, bool, Dict[str, Any]]:
         """Sets the drone state directly and updates the view.
         
@@ -364,10 +372,24 @@ class DroneEnv:
             x, y, z, roll, pitch, yaw, frame
         )
 
+        # Estimate yaw rate (deg/s) via discrete differentiation
+        now = time.monotonic()
+        if self._prev_yaw is not None and self._prev_set_state_time is not None:
+            dt = now - self._prev_set_state_time
+            if dt > 0:
+                dyaw = (yaw - self._prev_yaw + 180) % 360 - 180  # wrap to [-180, 180]
+                psi_vel = dyaw / dt
+            else:
+                psi_vel = 0.0
+        else:
+            psi_vel = 0.0
+        self._prev_yaw = yaw
+        self._prev_set_state_time = now
+
         info = {
             "points": points,
             "drone_state": drone_state,
-            "actions": [0.0, 0.0, 0.0, 0.0, self.simulator.drone.psi_deg], # Dummy actions
+            "actions": [roll, pitch, psi_vel, fk, self.simulator.drone.psi_deg],
             "nadir_point": nadir_point,
         }
 
