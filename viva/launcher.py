@@ -18,8 +18,8 @@ def main():
             sys.exit(1)
     else:
         # Arguments provided, use the original CLI interface
-        from viva.main import app
-        app()
+        from viva.main import main
+        main()
 
 if __name__ == "__main__":
     main()
