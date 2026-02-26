@@ -1,5 +1,9 @@
 # Python
 __pycache__
+
+# System
+last_video_dir.json
+
 *.pyc
 *.pyd
 *.pyo
