@@ -39,21 +39,23 @@ class PX4DroneControl:
         self.current_setpoint = (56, 1024, 0, 0, 0, 0) # (pos or vel), (yaw or yaw_rate), x, y, z, yaw (NED)
         self.running = True
         self.offboard_streaming = False
-        #self.altitude = 2.0
-
-        # Constantly send setpoints (PX4 requirement)
-        self.get_position_thread = threading.Thread(target=self.get_local_position)
-        self.get_position_thread.daemon = True
-        self.get_position_thread.start()
         self.current_local_position = (0, 0, 0) # x, y, z (NED)
         self.current_attitude = (0, 0, 0) # roll, pitch, yaw (NED)
         self.gps_location = (0, 0, 0) # lat, lon, alt
         #self.current_quaternion = (1, 0, 0, 0) # q1, q2, q3, q4 (NED)
+
+        # Constantly get position and attitude 
+        self.get_position_thread = threading.Thread(target=self.get_local_position)
+        self.get_position_thread.daemon = True
+        self.get_position_thread.start()
+
+        
         
         # Constantly send setpoints (PX4 requirement)
         self.send_thread = threading.Thread(target=self._send_pos_vel_acc_loop)
         self.send_thread.daemon = True
         self.send_thread.start()
+        time.sleep(2)
 
     def _send_pos_vel_acc_loop(self):
         """
@@ -62,8 +64,8 @@ class PX4DroneControl:
         """
         while self.running:
             if self.offboard_streaming:
-                x, y, z, yaw = self.current_setpoint[2:]
-                type_mask = 4095-self.current_setpoint[0] - self.current_setpoint[1] # yaw_rate, yaw, accelaration(3), velocities(3), position(3) 
+                N, E, D, yaw = self.current_setpoint[2:]
+                type_mask = 4095 - self.current_setpoint[0] - self.current_setpoint[1] # yaw_rate, yaw, accelaration(3), velocities(3), position(3) 
                 
                 self.master.mav.set_position_target_local_ned_send(
                     0, # time_boot_ms
@@ -71,8 +73,8 @@ class PX4DroneControl:
                     self.master.target_component,
                     mavutil.mavlink.MAV_FRAME_LOCAL_NED,
                     type_mask,
-                    x, y, z,
-                    x, y, z, # Velocities
+                    N, E, D,
+                    N, E, D, # Velocities
                     0, 0, 0, # Accelerations
                     yaw, yaw # Yaw, Yaw rate (rad/seg)
                 )
@@ -85,6 +87,7 @@ class PX4DroneControl:
             msg = self.master.recv_match(type='GLOBAL_POSITION_INT', blocking=True)
             if msg:
                 self.gps_location = (msg.lat / 1e7, msg.lon / 1e7, msg.relative_alt / 1000.0)
+                break
 
                 
     def get_local_position(self):
@@ -108,10 +111,11 @@ class PX4DroneControl:
 
     def arm(self):
         print("Arming...")
-        self.master.mav.command_long_send(
+        self.master.mav.command_int_send(
             self.master.target_system, self.master.target_component,
+            mavutil.mavlink.MAV_FRAME_LOCAL_NED,
             mavutil.mavlink.MAV_CMD_COMPONENT_ARM_DISARM,
-            0, 1, 0, 0, 0, 0, 0, 0
+            0, 0, 1, 0, 0, 0, 0, 0, 0
         )
         self.master.motors_armed_wait()
         print("Arming confirmed!")
@@ -120,44 +124,28 @@ class PX4DroneControl:
         """
         In PX4, we first use the standard TAKEOFF mode.
         """
-        lat, lon, _ = self.get_gps_location()
+        self.get_gps_location()
         self.master.mav.command_long_send(
             self.master.target_system, self.master.target_component,
             mavutil.mavlink.MAV_CMD_NAV_TAKEOFF,
-            0, 0, 0, 0, 0, lat, lon, 0
+            0, 0, 0, 0, 0, self.gps_location[0], self.gps_location[1], altitude
         )
         print("Takeoff")
-        
-        self.altitude = altitude
-        self.go_to_local_xyz(0, 0, -self.altitude)
-
         while True:
-            msg = self.master.recv_match(type='GLOBAL_POSITION_INT', blocking=True)
-            if msg and (msg.relative_alt/1000.0) > (0.9 * self.altitude):
+            if self.gps_location[2] > (0.9 * altitude):
                 break
             time.sleep(0.5)
-
-    def go_to_local_xyz(self, x, y, z=None):
-        """
-        Changes to OFFBOARD and moves the drone.
-        """
-        if z is None:
-            z = -self.altitude
-        self.current_setpoint = (x, y, z)
-        self.offboard_streaming = True
-        time.sleep(1)
-        self.set_mode_offboard()
-        print(f"Go to N={x}, E={y}, D={z}")
 
     def set_mode(self, mode_id):
         """
         Changes the PX4 mode.
         """
-        self.master.mav.command_long_send(
+        self.master.mav.command_int_send(
             self.master.target_system,
             self.master.target_component,
+            mavutil.mavlink.MAV_FRAME_LOCAL_NED,
             mavutil.mavlink.MAV_CMD_DO_SET_MODE,
-            0,
+            0, 0,
             mavutil.mavlink.MAV_MODE_FLAG_CUSTOM_MODE_ENABLED,
             mode_id, 
             0, 0, 0, 0, 0
@@ -180,29 +168,20 @@ class PX4DroneControl:
     def land(self):
         print("\nLanding!")
         self.running = False # Stop offboard stream
-        self.master.mav.command_long_send(
-            self.master.target_system, self.master.target_component,
+        self.master.mav.command_int_send(
+            self.master.target_system, 
+            self.master.target_component,
+            mavutil.mavlink.MAV_FRAME_LOCAL_NED,
             mavutil.mavlink.MAV_CMD_NAV_LAND,
-            0, 0, 0, 0, 0, 0, 0, 0
+            0, 0, 0, 0, 0, 0, 0, 0, 0
         )
         self.master.motors_disarmed_wait()
         print("Drone on the ground.")
 
 
-    def send_manual_control(self, x, y, z, r):
-        """
-        Sends manual control inputs (joystick).
-        x, y, z, r: -1000 to 1000
-        """
-        
-        self.master.mav.manual_control_send(
-            self.master.target_system,
-            x, y, z, r,
-            0 # buttons
-        )
 
 if __name__ == "__main__":
-    drone = PX4DroneControl('udpin:127.0.0.1:14540')
+    drone = PX4DroneControl(connection_string='udpin:127.0.0.1:14540',baudrate=57600)
     
     try:
         drone.arm()

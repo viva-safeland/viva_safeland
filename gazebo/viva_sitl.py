@@ -3,9 +3,6 @@ import gazebo.pymavlink_px4_interface as px4
 import argparse, sys
 import numpy as np
 
-class uav:
-    def __init__(self, direction='udpin:127.0.0.1:14540', baudrate=57600):
-        self.drone = px4.PX4DroneControl(connection_string=direction, baudrate=baudrate)
 
 def main():
     """Run the ViVa SAFELAND simulation."""
@@ -54,19 +51,27 @@ def main():
     obs, info = env.reset()
     end = False
 
-    quad = uav(baudrate=baudrate, direction=direction)
+    quad = px4.PX4DroneControl(connection_string=direction, baudrate=baudrate)
+    quad.start_offboard_streaming()
     
-    roll, pitch, yaw = quad.drone.current_attitude
+    roll, pitch, yaw = quad.current_attitude
     print(roll, pitch, yaw)
     yaw_offset = -yaw
-    lat_offset, lon_offset, alt_offset = quad.drone.gps_location
+    lat_offset, lon_offset, alt_offset = quad.gps_location
+    quad.arm()
+    quad.takeoff_gps(5)
+
+    off_vel = 56
+    off_pos = 7
+    off_yaw = 1024
+    off_yaw_rate = 2048
 
     while not end:
-        lat, lon, alt = quad.drone.gps_location
+        lat, lon, alt = quad.gps_location
         pos_x = 2.0 * np.pi * 6371000.0 * (lat - lat_offset) / 360.0
         pos_y = 2.0 * np.pi * 6371000.0 * np.cos(lat) * (lon - lon_offset) / 360.0
         #print(pos_x, pos_y)
-        roll, pitch, yaw = quad.drone.current_attitude
+        roll, pitch, yaw = quad.current_attitude
         roll_deg = roll * 180 / np.pi
         pitch_deg = pitch * 180 / np.pi
         yaw_deg = yaw * 180 / np.pi
@@ -77,6 +82,8 @@ def main():
         y = -pos_x*np.sin(yaw_offset) + pos_y*np.cos(yaw_offset)
         #position = (x, y, alt)
         #print(position)
+        quad.current_setpoint = (off_vel, off_yaw, 0.5, 0, 0, 0.1) 
+        quad.set_mode_offboard()
         
         obs, end, info = env.set_state(x, y, alt, roll_deg, -pitch_deg, yaw_deg, 0.0)
 
