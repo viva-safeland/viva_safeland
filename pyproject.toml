@@ -24,6 +24,9 @@ dependencies = [
     "opencv-python>=4.12.0.88",
     "pillow>=10.4.0",
     "pygame>=2.6.1",
+    "fastcrc>=0.3.5",
+    "lxml>=6.0.4",
+    "pymavlink>=2.4.49",
 ]
 
 # [tool.uv.sources]
@@ -32,6 +35,7 @@ dependencies = [
 
 [project.scripts]
 viva = "viva.launcher:main"
+viva_sitl = "gazebo.viva_sitl:main"
 
 [project.optional-dependencies]
 docs = [
@@ -44,7 +48,7 @@ sitl = [
 ]
 
 [tool.setuptools.packages.find]
-include = ["viva*"]
+include = ["viva*", "gazebo*"]
 
 [tool.setuptools.package-data]
 viva = [
