@@ -1,6 +1,7 @@
 import time
 import threading
 from pymavlink import mavutil
+import numpy as np
 
 class PX4DroneControl:
     def __init__(self, connection_string, baudrate):
@@ -86,7 +87,7 @@ class PX4DroneControl:
         while True:
             msg = self.master.recv_match(type='GLOBAL_POSITION_INT', blocking=True)
             if msg:
-                self.gps_location = (msg.lat / 1e7, msg.lon / 1e7, msg.relative_alt / 1000.0)
+                self.gps_location = (msg.lat/1e7, msg.lon/1e7, msg.relative_alt/1000.0)
                 break
 
                 
@@ -97,7 +98,7 @@ class PX4DroneControl:
             #    self.current_position = (msg.x, msg.y, -msg.z)
             msg = self.master.recv_match(type='GLOBAL_POSITION_INT', blocking=True) # estimated position with GPS and accelerometer
             if msg:
-                self.gps_location = (msg.lat / 1e7, msg.lon / 1e7, msg.relative_alt / 1000.0)
+                self.gps_location = (msg.lat/1e7, msg.lon/1e7, msg.relative_alt/1000.0)
             
             msg = self.master.recv_match(type='ATTITUDE', blocking=True)
             if msg:
@@ -125,10 +126,12 @@ class PX4DroneControl:
         In PX4, we first use the standard TAKEOFF mode.
         """
         self.get_gps_location()
-        self.master.mav.command_long_send(
-            self.master.target_system, self.master.target_component,
+        self.master.mav.command_int_send(
+            self.master.target_system, 
+            self.master.target_component,
+            mavutil.mavlink.MAV_FRAME_LOCAL_NED,
             mavutil.mavlink.MAV_CMD_NAV_TAKEOFF,
-            0, 0, 0, 0, 0, self.gps_location[0], self.gps_location[1], altitude
+            0, 0, 0, 0, 0, 0, int(self.gps_location[0]*1e7), int(self.gps_location[1]*1e7), altitude
         )
         print("Takeoff")
         while True:

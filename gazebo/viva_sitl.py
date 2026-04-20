@@ -82,7 +82,7 @@ def main():
         y = -pos_x*np.sin(yaw_offset) + pos_y*np.cos(yaw_offset)
         #position = (x, y, alt)
         #print(position)
-        quad.current_setpoint = (off_vel, off_yaw, 0.5, 0, 0, 0.1) 
+        quad.current_setpoint = (off_vel, off_yaw_rate, 0.5, 0, 0, 0.2) 
         quad.set_mode_offboard()
         
         obs, end, info = env.set_state(x, y, alt, roll_deg, -pitch_deg, yaw_deg, 0.0)
