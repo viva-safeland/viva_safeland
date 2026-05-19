@@ -179,7 +179,8 @@ class DroneEnv:
             x: Optional[float]=None, 
             y: Optional[float]=None, 
             z: Optional[float]=None,
-            psi_deg_init: Optional[float]=None
+            psi_deg_init: Optional[float]=None,
+            z_init_ranges: Tuple[float, float]=(0.4, 0.8)
         ) -> Tuple[np.ndarray, Dict[str, Any]]:
         """Resets the environment to an initial state.
 
@@ -204,7 +205,7 @@ class DroneEnv:
             raise RuntimeError("Failed to read the background video or image, verify the file path")
         frame = self.frame
         
-        z_ini = z if z is not None else np.random.uniform(20, min(60, self.height - 1))
+        z_ini = z if z is not None else np.random.uniform(self.height * z_init_ranges[0], self.height * z_init_ranges[1])
         psi_deg_init = psi_deg_init if psi_deg_init is not None else np.random.uniform(0, 360)
 
         lim_y = np.tan(np.radians(41.05)) * self.height
