@@ -1,0 +1,46 @@
+:root  > * {
+  --md-primary-fg-color:        #5e9b18;
+  --md-primary-fg-color--dark:  #5e9b18;
+  --md-primary-fg-color--light: #5e9b18;
+  --md-typeset-a-color:         #6b264b;
+  /* --md-typeset-a-color:         #5e9b18; */
+}
+
+/* Style for table headers (first row) */
+.md-content table th {
+  background-color: #5e9b18;
+  color: white;
+}
+
+/* Increase font size for tables using the specific selector */
+.md-typeset table:not([class]) {
+  font-size: 1.0em; /* Increased from .9rem to 1.0em for better visibility */
+}
+
+/* Set font size for plain text (paragraphs) */
+.md-typeset p {
+  font-size: 1.0em;
+}
+
+/* Set font size for callouts (admonitions) */
+.md-typeset .admonition {
+  font-size: 1.0em;
+}
+
+/* Set author images circular */
+.grid.cards figure img {
+  border-radius: 50%;
+}
+
+.wy-side-nav-search {
+  background-color: #5e9b18;
+}
+
+.highlight span.filename {
+  background-color: #5e9b18;
+}
+
+/* .md-header__button.md-logo img, .md-header__button.md-logo svg {
+  height: 10em;
+  width: auto;
+} */
